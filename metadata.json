@@ -1,0 +1,9 @@
+{
+  "name": "LIBRARYSTUDIO.5.0",
+  "description": "A production-grade, Google-scale AI workspace featuring advanced reasoning, multimodal Live API voice interaction, Veo video generation, and Google Search grounding.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
