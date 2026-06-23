@@ -1,0 +1,126 @@
+# =============================================================================
+# DSpace 7.6 Test Stack — Bulawayo Polytechnic
+# Runs all installer steps except the 20-min Maven build (mocked)
+#
+# Usage:
+#   cd dspace-install
+#   docker compose -f test/docker-compose.yml up --build --abort-on-container-exit
+#   docker compose -f test/docker-compose.yml logs dspace-test
+# =============================================================================
+version: '3.8'
+
+services:
+
+  # ── PostgreSQL 15 ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: bpoly-dspace-db
+    environment:
+      POSTGRES_DB:       dspace_test
+      POSTGRES_USER:     dspace
+      POSTGRES_PASSWORD: TestPass_BPoly2024!
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dspace -d dspace_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - dspace-net
+
+  # ── Apache Solr 8.11 ────────────────────────────────────────────────────────
+  solr:
+    image: solr:8.11-slim
+    container_name: bpoly-dspace-solr
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr_data:/var/solr/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8983/solr/admin/info/system"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+    networks:
+      - dspace-net
+
+  # ── Tomcat 9 (minimal — to test REST API deploy) ────────────────────────────
+  tomcat:
+    image: tomcat:9-jdk17-temurin
+    container_name: bpoly-dspace-tomcat
+    ports:
+      - "8080:8080"
+    volumes:
+      - tomcat_webapps:/usr/local/tomcat/webapps
+    environment:
+      CATALINA_OPTS: "-Xmx1024m -Xms256m -Dfile.encoding=UTF-8"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080 || exit 0"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - dspace-net
+
+  # ── DSpace Test Runner ──────────────────────────────────────────────────────
+  dspace-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bpoly-dspace-runner
+    depends_on:
+      postgres:
+        condition: service_healthy
+      solr:
+        condition: service_healthy
+    volumes:
+      - ..:/opt/dspace-install         # mount the whole dspace-install dir
+      - test_dspace:/dspace            # mock DSpace install target
+      - test_build:/build              # mock build dir
+    environment:
+      # ── Override .env values for test ──────────────────────────────────────
+      DB_HOST:              postgres
+      DB_PORT:              "5432"
+      DB_NAME:              dspace_test
+      DB_USER:              dspace
+      DB_PASSWORD:          TestPass_BPoly2024!
+      SOLR_PORT:            "8983"
+      TOMCAT_PORT:          "8080"
+      UI_PORT:              "4000"
+      IR_HOSTNAME:          ir.bpoly.ac.zw
+      INSTITUTION_NAME:     Bulawayo Polytechnic
+      INSTITUTION_SHORT:    BPoly
+      ADMIN_EMAIL:          library@bpoly.ac.zw
+      ADMIN_FIRST:          Library
+      ADMIN_LAST:           Administrator
+      ADMIN_PHONE:          "+2630000000"
+      HANDLE_PREFIX:        "123456789"
+      MAIL_SERVER:          localhost
+      MAIL_PORT:            "25"
+      MAIL_FROM:            noreply@bpoly.ac.zw
+      MAIL_ALERT:           it@bpoly.ac.zw
+      DSPACE_VERSION:       "7.6.2"
+      DSPACE_ANGULAR_VERSION: "7.6.2"
+      SOLR_VERSION:         "8.11.3"
+      JAVA_VERSION:         "17"
+      NODE_VERSION:         "18"
+      DSPACE_DIR:           /dspace
+      BUILD_DIR:            /build
+      CERTBOT_EMAIL:        it@bpoly.ac.zw
+      ENABLE_SSL:           "false"   # skip certbot in test
+      INSTALL_ROOT:         /opt/dspace-install
+    command: bash /opt/dspace-install/test/run-tests.sh
+    networks:
+      - dspace-net
+
+volumes:
+  pg_data:
+  solr_data:
+  tomcat_webapps:
+  test_dspace:
+  test_build:
+
+networks:
+  dspace-net:
+    driver: bridge

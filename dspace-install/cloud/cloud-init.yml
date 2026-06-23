@@ -1,0 +1,125 @@
+#cloud-config
+# =============================================================================
+# cloud-init for Bulawayo Polytechnic DSpace 7.6 Server
+#
+# Paste this as "User Data" when launching a cloud VM:
+#   AWS EC2:       Launch Instance → Advanced → User data
+#   GCP Compute:   Create VM → Management → Automation → Startup script
+#   Azure VM:      Create VM → Advanced → Custom data
+#   DigitalOcean:  Create Droplet → Advanced → User data
+#   Hetzner:       Create Server → Cloud config
+#
+# Recommended VM spec: 8 GB RAM, 4 vCPU, 100 GB SSD, Ubuntu 22.04 LTS
+# DNS: Point ir.bpoly.ac.zw A record → this VM's IP BEFORE first boot
+#
+# The full install log will be at: /var/log/dspace-install.log
+# =============================================================================
+
+# ── System hostname ───────────────────────────────────────────────────────────
+hostname: ir-bpoly-dspace
+fqdn: ir.bpoly.ac.zw
+manage_etc_hosts: true
+
+# ── Locale / Timezone ─────────────────────────────────────────────────────────
+locale: en_ZW.UTF-8
+timezone: Africa/Harare
+
+# ── System updates ────────────────────────────────────────────────────────────
+package_update: true
+package_upgrade: true
+
+# ── Base packages needed for the installer ───────────────────────────────────
+packages:
+  - git
+  - curl
+  - wget
+  - unzip
+
+# ── Write the .env file with your credentials ────────────────────────────────
+# IMPORTANT: Change DB_PASSWORD and CERTBOT_EMAIL before deploying!
+write_files:
+  - path: /opt/dspace-setup/.env
+    permissions: '0600'
+    owner: root:root
+    content: |
+      # ── Institution ──────────────────────────────────────────────────────────
+      INSTITUTION_NAME="Bulawayo Polytechnic"
+      INSTITUTION_SHORT="BPoly"
+      INSTITUTION_COUNTRY="ZW"
+      INSTITUTION_CITY="Bulawayo"
+      IR_HOSTNAME="ir.bpoly.ac.zw"
+
+      ADMIN_EMAIL="library@bpoly.ac.zw"
+      ADMIN_FIRST="Library"
+      ADMIN_LAST="Administrator"
+      ADMIN_PHONE="+263292884471"
+
+      # ── DSpace Versions ──────────────────────────────────────────────────────
+      DSPACE_VERSION="7.6.2"
+      DSPACE_ANGULAR_VERSION="7.6.2"
+      SOLR_VERSION="8.11.3"
+      JAVA_VERSION="17"
+      NODE_VERSION="18"
+
+      # ── Paths ────────────────────────────────────────────────────────────────
+      DSPACE_DIR="/dspace"
+      BUILD_DIR="/build"
+
+      # ── Database ─────────────────────────────────────────────────────────────
+      DB_HOST="localhost"
+      DB_PORT="5432"
+      DB_NAME="dspace"
+      DB_USER="dspace"
+      DB_PASSWORD="CHANGE_THIS_TO_A_STRONG_PASSWORD_12CHARS+"
+
+      # ── Handle ───────────────────────────────────────────────────────────────
+      HANDLE_PREFIX="123456789"
+
+      # ── Mail ─────────────────────────────────────────────────────────────────
+      MAIL_SERVER="localhost"
+      MAIL_PORT="25"
+      MAIL_FROM="noreply@bpoly.ac.zw"
+      MAIL_ALERT="it@bpoly.ac.zw"
+
+      # ── SSL ──────────────────────────────────────────────────────────────────
+      CERTBOT_EMAIL="it@bpoly.ac.zw"
+      ENABLE_SSL="true"
+
+      # ── Ports ────────────────────────────────────────────────────────────────
+      TOMCAT_PORT="8080"
+      UI_PORT="4000"
+      SOLR_PORT="8983"
+
+# ── Bootstrap script: clone repo and run installer ───────────────────────────
+runcmd:
+  # Log everything
+  - exec > >(tee /var/log/cloud-init-dspace.log) 2>&1
+  - echo "=== DSpace cloud-init bootstrap started: $(date) ==="
+
+  # Clone the LibraryStudio / DSpace installer repo
+  - git clone --depth=1
+      https://github.com/wgmasvix-hue/chengetAI2.8.git
+      /opt/chengetai
+
+  # Copy the installer to a working location and link .env
+  - cp -r /opt/chengetai/dspace-install /opt/dspace-install
+  - cp /opt/dspace-setup/.env /opt/dspace-install/.env
+  - chmod +x /opt/dspace-install/install.sh /opt/dspace-install/scripts/*.sh
+
+  # Run the full installer
+  - |
+    cd /opt/dspace-install
+    bash install.sh >> /var/log/dspace-install.log 2>&1
+    echo "=== DSpace installer exit code: $? $(date) ===" >> /var/log/dspace-install.log
+
+  # Lock down the firewall
+  - bash /opt/dspace-install/firewall.sh >> /var/log/dspace-install.log 2>&1
+
+  - echo "=== Bootstrap complete: $(date) ==="
+
+# ── Final message shown in cloud console ─────────────────────────────────────
+final_message: |
+  Bulawayo Polytechnic DSpace 7.6 bootstrap complete.
+  Full log: /var/log/dspace-install.log
+  Repository: https://ir.bpoly.ac.zw
+  Admin: library@bpoly.ac.zw

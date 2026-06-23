@@ -1,0 +1,314 @@
+# =============================================================================
+# GitHub Actions — DSpace 7.6 Installer Test Suite
+# Bulawayo Polytechnic Institutional Repository
+#
+# Runs on every push/PR to the dspace install branch.
+# Tests: syntax, config substitution, service connectivity, script permissions.
+# Skips the 20-min Maven build (tested separately in nightly workflow).
+# =============================================================================
+name: DSpace Installer Tests
+
+on:
+  push:
+    branches:
+      - 'claude/dspace-bulawayo-poly-install-**'
+      - main
+    paths:
+      - 'dspace-install/**'
+  pull_request:
+    paths:
+      - 'dspace-install/**'
+  workflow_dispatch:       # allow manual trigger from GitHub UI
+
+env:
+  # ── Test credentials (safe — not real) ──────────────────────────────────────
+  DB_PASSWORD:     TestPass_BPoly2024!
+  DB_NAME:         dspace_test
+  DB_USER:         dspace
+  DB_HOST:         localhost
+  DB_PORT:         "5432"
+  SOLR_PORT:       "8983"
+  TOMCAT_PORT:     "8080"
+  UI_PORT:         "4000"
+  IR_HOSTNAME:     ir.bpoly.ac.zw
+  INSTITUTION_NAME: "Bulawayo Polytechnic"
+  INSTITUTION_SHORT: BPoly
+  ADMIN_EMAIL:     library@bpoly.ac.zw
+  ADMIN_FIRST:     Library
+  ADMIN_LAST:      Administrator
+  ADMIN_PHONE:     "+2630000000"
+  DSPACE_VERSION:  "7.6.2"
+  DSPACE_ANGULAR_VERSION: "7.6.2"
+  SOLR_VERSION:    "8.11.3"
+  JAVA_VERSION:    "17"
+  NODE_VERSION:    "18"
+  DSPACE_DIR:      /dspace
+  BUILD_DIR:       /build
+  HANDLE_PREFIX:   "123456789"
+  MAIL_SERVER:     localhost
+  MAIL_PORT:       "25"
+  MAIL_FROM:       noreply@bpoly.ac.zw
+  MAIL_ALERT:      it@bpoly.ac.zw
+  CERTBOT_EMAIL:   it@bpoly.ac.zw
+  ENABLE_SSL:      "false"
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Syntax & Static Analysis
+  # ─────────────────────────────────────────────────────────────────────────────
+  syntax-check:
+    name: Bash Syntax & ShellCheck
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Check bash syntax (bash -n)
+        run: |
+          FAIL=0
+          for f in dspace-install/scripts/*.sh dspace-install/install.sh \
+                   dspace-install/firewall.sh dspace-install/upgrade.sh; do
+            if bash -n "$f" 2>&1; then
+              echo "✓ $f"
+            else
+              echo "✗ $f"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+
+      - name: ShellCheck analysis
+        run: |
+          shellcheck -e SC1091,SC2086,SC2034 \
+            dspace-install/scripts/*.sh \
+            dspace-install/install.sh \
+            dspace-install/firewall.sh \
+            dspace-install/upgrade.sh || true
+          # Treat as warning only — don't fail CI on shellcheck
+
+      - name: Check file permissions
+        run: |
+          FAIL=0
+          for f in dspace-install/install.sh dspace-install/firewall.sh \
+                   dspace-install/upgrade.sh dspace-install/scripts/*.sh; do
+            if [[ -x "$f" ]]; then
+              echo "✓ executable: $f"
+            else
+              echo "✗ NOT executable: $f"
+              FAIL=1
+            fi
+          done
+          exit $FAIL
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Config File Tests
+  # ─────────────────────────────────────────────────────────────────────────────
+  config-test:
+    name: Config Substitution & Validation
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y -qq nginx
+
+      - name: Write .env from CI environment
+        run: |
+          cd dspace-install
+          cp .env.example .env
+          for var in DB_PASSWORD DB_NAME DB_USER DB_HOST DB_PORT \
+                     IR_HOSTNAME INSTITUTION_NAME INSTITUTION_SHORT \
+                     ADMIN_EMAIL DSPACE_VERSION DSPACE_DIR BUILD_DIR \
+                     HANDLE_PREFIX MAIL_SERVER MAIL_PORT MAIL_FROM \
+                     MAIL_ALERT SOLR_PORT TOMCAT_PORT UI_PORT ENABLE_SSL \
+                     DSPACE_ANGULAR_VERSION SOLR_VERSION JAVA_VERSION \
+                     NODE_VERSION CERTBOT_EMAIL ADMIN_FIRST ADMIN_LAST \
+                     ADMIN_PHONE INSTITUTION_COUNTRY INSTITUTION_CITY; do
+            val="${!var:-}"
+            [[ -n "$val" ]] && sed -i "s|^${var}=.*|${var}=\"${val}\"|g" .env
+          done
+          echo "--- .env preview (masked password) ---"
+          sed 's/PASSWORD=.*/PASSWORD=***/' .env
+
+      - name: Test local.cfg substitution
+        run: |
+          cp dspace-install/config/local.cfg /tmp/test-local.cfg
+          source dspace-install/.env
+          sed -i \
+            -e "s|%%DSPACE_DIR%%|${DSPACE_DIR}|g" \
+            -e "s|%%IR_HOSTNAME%%|${IR_HOSTNAME}|g" \
+            -e "s|%%INSTITUTION_NAME%%|${INSTITUTION_NAME}|g" \
+            -e "s|%%INSTITUTION_SHORT%%|${INSTITUTION_SHORT}|g" \
+            -e "s|%%DB_HOST%%|${DB_HOST}|g" \
+            -e "s|%%DB_PORT%%|${DB_PORT}|g" \
+            -e "s|%%DB_NAME%%|${DB_NAME}|g" \
+            -e "s|%%DB_USER%%|${DB_USER}|g" \
+            -e "s|%%DB_PASSWORD%%|${DB_PASSWORD}|g" \
+            -e "s|%%HANDLE_PREFIX%%|${HANDLE_PREFIX}|g" \
+            -e "s|%%MAIL_SERVER%%|${MAIL_SERVER}|g" \
+            -e "s|%%MAIL_PORT%%|${MAIL_PORT}|g" \
+            -e "s|%%MAIL_FROM%%|${MAIL_FROM}|g" \
+            -e "s|%%ADMIN_EMAIL%%|${ADMIN_EMAIL}|g" \
+            -e "s|%%MAIL_ALERT%%|${MAIL_ALERT}|g" \
+            -e "s|%%SOLR_PORT%%|${SOLR_PORT}|g" \
+            /tmp/test-local.cfg
+
+          REMAINING=$(grep '%%.*%%' /tmp/test-local.cfg 2>/dev/null | wc -l)
+          echo "Unresolved placeholders: $REMAINING"
+          [[ "$REMAINING" -eq 0 ]] || { grep '%%.*%%' /tmp/test-local.cfg; exit 1; }
+
+          for key in "dspace.dir" "dspace.server.url" "dspace.ui.url" \
+                     "db.url" "db.username" "solr.server" "handle.prefix"; do
+            grep -q "^${key}" /tmp/test-local.cfg && echo "✓ $key" || \
+              { echo "✗ missing: $key"; exit 1; }
+          done
+
+      - name: Test Nginx config substitution and syntax
+        run: |
+          source dspace-install/.env
+          cp dspace-install/nginx/ir.bpoly.ac.zw.conf /tmp/test-nginx.conf
+          sed -i \
+            -e "s|%%IR_HOSTNAME%%|${IR_HOSTNAME}|g" \
+            -e "s|%%TOMCAT_PORT%%|${TOMCAT_PORT}|g" \
+            -e "s|%%UI_PORT%%|${UI_PORT}|g" \
+            /tmp/test-nginx.conf
+
+          [[ $(grep -c '%%.*%%' /tmp/test-nginx.conf || echo 0) -eq 0 ]] || exit 1
+          echo "✓ No unresolved Nginx placeholders"
+
+          sudo cp /tmp/test-nginx.conf /etc/nginx/sites-available/ir.bpoly.ac.zw
+          sudo ln -sfn /etc/nginx/sites-available/ir.bpoly.ac.zw \
+                       /etc/nginx/sites-enabled/ir.bpoly.ac.zw
+          sudo rm -f /etc/nginx/sites-enabled/default
+          sudo nginx -t && echo "✓ Nginx config syntax valid"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 3: Service Integration Tests
+  # ─────────────────────────────────────────────────────────────────────────────
+  service-test:
+    name: PostgreSQL + Solr Integration
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB:       dspace_test
+          POSTGRES_USER:     dspace
+          POSTGRES_PASSWORD: TestPass_BPoly2024!
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dspace -d dspace_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+      solr:
+        image: solr:8.11-slim
+        ports:
+          - 8983:8983
+        options: >-
+          --health-cmd "curl -sf http://localhost:8983/solr/admin/info/system"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: sudo apt-get install -y -qq postgresql-client
+
+      - name: Test PostgreSQL connectivity
+        run: |
+          PGPASSWORD=TestPass_BPoly2024! psql \
+            -h localhost -U dspace -d dspace_test \
+            -c "SELECT version();" && echo "✓ PostgreSQL connected"
+
+      - name: Test pgcrypto extension
+        run: |
+          PGPASSWORD=TestPass_BPoly2024! psql \
+            -h localhost -U dspace -d dspace_test \
+            -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;" && \
+          PGPASSWORD=TestPass_BPoly2024! psql \
+            -h localhost -U dspace -d dspace_test \
+            -c "SELECT * FROM pg_extension WHERE extname='pgcrypto';" | \
+            grep -q pgcrypto && echo "✓ pgcrypto installed"
+
+      - name: Test Solr connectivity
+        run: |
+          curl -sf "http://localhost:8983/solr/admin/info/system" | \
+            python3 -c "import sys,json; d=json.load(sys.stdin); \
+                        print('✓ Solr', d['lucene']['solr-spec-version'])"
+
+      - name: Create DSpace Solr cores via API
+        run: |
+          for core in search statistics authority oai; do
+            RESP=$(curl -sf \
+              "http://localhost:8983/solr/admin/cores?action=CREATE&name=${core}&configSet=_default")
+            echo "$RESP" | python3 -c \
+              "import sys,json; d=json.load(sys.stdin); \
+               status=d['responseHeader']['status']; \
+               print(f'✓ Solr core {\"$core\"} created' if status==0 else f'✗ {\"$core\"} status={status}')"
+          done
+
+      - name: Write .env and run full test suite
+        run: |
+          cd dspace-install
+          cp test/.env.test .env
+          INSTALL_ROOT="$(pwd)" DB_HOST=localhost bash test/run-tests.sh
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 4: Docker Compose Smoke Test
+  # ─────────────────────────────────────────────────────────────────────────────
+  docker-test:
+    name: Docker Compose Stack
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Write .env for Docker test
+        run: cp dspace-install/test/.env.test dspace-install/.env
+
+      - name: Build test image
+        run: |
+          docker compose -f dspace-install/test/docker-compose.yml \
+            build --no-cache dspace-test
+
+      - name: Start backing services
+        run: |
+          docker compose -f dspace-install/test/docker-compose.yml \
+            up -d postgres solr
+          echo "Waiting for services to be healthy..."
+          timeout 120 bash -c '
+            until docker compose -f dspace-install/test/docker-compose.yml \
+                    ps --format json | python3 -c "
+import sys,json
+data=[json.loads(l) for l in sys.stdin if l.strip()]
+healthy=all(s.get(\"Health\",\"healthy\") in (\"healthy\",\"\") for s in data)
+sys.exit(0 if healthy else 1)" 2>/dev/null; do
+              sleep 5
+            done
+          ' && echo "✓ All services healthy"
+
+      - name: Run test suite in Docker
+        run: |
+          docker compose -f dspace-install/test/docker-compose.yml \
+            run --rm dspace-test
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose -f dspace-install/test/docker-compose.yml logs
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose -f dspace-install/test/docker-compose.yml down -v

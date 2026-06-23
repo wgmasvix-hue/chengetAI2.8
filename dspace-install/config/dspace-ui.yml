@@ -1,5 +1,5 @@
 # DSpace Angular UI Configuration — Bulawayo Polytechnic
-# Placeholders (%%VAR%%) are substituted by 06-frontend.sh at install time
+# Substituted by 06-frontend.sh at install time (see install.sh)
 # Docs: https://wiki.lyrasis.org/display/DSDOC7x/Installing+DSpace
 
 ui:
