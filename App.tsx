@@ -16,6 +16,7 @@ import KohaDashboard from './components/KohaDashboard';
 import TrendingBooks from './components/TrendingBooks';
 import StudentPortal from './components/StudentPortal';
 import SystemsAdmin from './components/SystemsAdmin';
+import DSpaceInstaller from './components/DSpaceInstaller';
 import DigitalResourcesPanel from './components/DigitalResourcesPanel';
 import AIStudio from './components/AIStudio';
 import PDFReader from './components/PDFReader';
@@ -234,6 +235,7 @@ const App: React.FC = () => {
       case AppView.TRENDING: return <TrendingBooks />;
       case AppView.STUDENT_PORTAL: return <StudentPortal onOpenPdf={(asset) => setActivePdf({ url: asset.url || '', title: asset.title })} />;
       case AppView.SYSTEMS_ADMIN: return <SystemsAdmin />;
+      case AppView.DSPACE_INSTALL: return <DSpaceInstaller />;
       default: return <Overview setView={setCurrentView} userRole={userRole || undefined} />;
     }
   };

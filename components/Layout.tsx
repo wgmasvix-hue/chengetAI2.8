@@ -51,6 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, onLogout
     { id: AppView.INDUSTRIALIZATION, label: 'Work & Tools', icon: '🏭' },
     { id: AppView.OPEN_ACCESS, label: 'Free Resources', icon: '🔓' },
     { id: AppView.CATALOGUING, label: 'Book Info Tool', icon: '🏷️' },
+    { id: AppView.DSPACE_INSTALL, label: 'DSpace Installer', icon: '🗄️' },
   ];
 
   const studentItems = [
