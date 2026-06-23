@@ -491,6 +491,50 @@ Output only the Nginx config with comments. No markdown fences.`;
               </div>
             </div>
 
+            {/* Server Quick Start */}
+            <div className="bg-zinc-900 rounded-[2rem] p-8 text-white">
+              <p className="text-[9px] font-black uppercase tracking-widest text-teal-400 mb-4">Server Quick Start — Run These Commands on the BPoly Server</p>
+              <div className="space-y-2">
+                {[
+                  '# 1. SSH into the server as a sudo user',
+                  'ssh admin@<server-ip>',
+                  '',
+                  '# 2. Clone this repo',
+                  'sudo apt install -y git',
+                  'git clone https://github.com/wgmasvix-hue/chengetAI2.8.git /opt/chengetai',
+                  'cd /opt/chengetai/dspace-install',
+                  '',
+                  '# 3. Set your database password (required before running)',
+                  'cp .env.example .env',
+                  'nano .env   # set DB_PASSWORD to a strong password (12+ chars)',
+                  '',
+                  '# 4. Run the full installer (takes ~45 min total)',
+                  'sudo bash install.sh',
+                  '',
+                  '# 5. Optional: lock down firewall after install',
+                  'sudo bash firewall.sh',
+                ].map((line, i) => (
+                  <div key={i} className={`flex items-start gap-3 ${line === '' ? 'h-2' : ''}`}>
+                    {line !== '' && (
+                      <>
+                        <span className={`text-xs font-mono shrink-0 mt-0.5 ${line.startsWith('#') ? 'text-zinc-500' : 'text-teal-400'}`}>
+                          {line.startsWith('#') ? '#' : '$'}
+                        </span>
+                        <code className={`text-xs font-mono flex-1 ${line.startsWith('#') ? 'text-zinc-500 italic' : 'text-green-300'}`}>
+                          {line.startsWith('#') ? line.slice(2) : line}
+                        </code>
+                        {!line.startsWith('#') && <CopyButton text={line} />}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-[9px] text-zinc-500 mt-4 font-medium">
+                To run a single step: <code className="text-teal-400">sudo bash install.sh --step 4</code> &nbsp;|&nbsp;
+                Resume from step: <code className="text-teal-400">sudo bash install.sh --from 5</code>
+              </p>
+            </div>
+
             <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-6 flex gap-4">
               <span className="text-2xl shrink-0">⚠️</span>
               <div>
@@ -499,8 +543,8 @@ Output only the Nginx config with comments. No markdown fences.`;
                   <li>Run all commands as a user with <code className="bg-amber-100 px-1 rounded font-mono">sudo</code> privileges</li>
                   <li>Minimum server specs: 8 GB RAM, 4 vCPU, 100 GB storage</li>
                   <li>Ensure outbound internet access to Maven Central and GitHub during the build step</li>
-                  <li>Point the DNS record for <code className="bg-amber-100 px-1 rounded font-mono">ir.{BPOLY_CONFIG.domain}</code> to this server's IP before configuring SSL</li>
-                  <li>Keep the database password set in Prerequisites — you will need it in Configure</li>
+                  <li>Point the DNS A record for <code className="bg-amber-100 px-1 rounded font-mono">ir.{BPOLY_CONFIG.domain}</code> to this server's IP before step 07 (Nginx/SSL)</li>
+                  <li>The full install log is at <code className="bg-amber-100 px-1 rounded font-mono">/var/log/dspace-install.log</code></li>
                 </ul>
               </div>
             </div>

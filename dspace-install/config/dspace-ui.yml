@@ -1,0 +1,113 @@
+# DSpace Angular UI Configuration — Bulawayo Polytechnic
+# Placeholders (%%VAR%%) are substituted by 06-frontend.sh at install time
+# Docs: https://wiki.lyrasis.org/display/DSDOC7x/Installing+DSpace
+
+ui:
+  ssl: true
+  host: %%IR_HOSTNAME%%
+  port: 443
+  nameSpace: /
+
+rest:
+  ssl: true
+  host: %%IR_HOSTNAME%%
+  port: 443
+  nameSpace: /server
+
+# ── Cache ─────────────────────────────────────────────────────────────────────
+cache:
+  # How long (ms) to cache REST API responses in SSR
+  serverSide: 3000
+
+# ── Universal (Server-Side Rendering) ────────────────────────────────────────
+universal:
+  preboot: true
+  async: true
+  time: false
+
+# ── Info ──────────────────────────────────────────────────────────────────────
+info:
+  enableEndUserAgreement: false
+  enablePrivacyStatement: false
+
+# ── Collection Page ───────────────────────────────────────────────────────────
+browseBy:
+  pageSize: 20
+  showThumbnails: true
+
+# ── Item Page ─────────────────────────────────────────────────────────────────
+item:
+  edit:
+    undoTimeout: 10
+
+# ── Media viewer ──────────────────────────────────────────────────────────────
+mediaViewer:
+  image: true
+  video: false
+
+# ── Bundle settings ───────────────────────────────────────────────────────────
+bundle:
+  standardBundles:
+    - ORIGINAL
+    - THUMBNAIL
+    - TEXT
+    - LICENSE
+
+# ── Theming ───────────────────────────────────────────────────────────────────
+themes:
+  - name: dspace
+    headTags: []
+
+# ── Search ────────────────────────────────────────────────────────────────────
+defaultDiscovery:
+  discoveryConfigurationName: defaultConfiguration
+
+search:
+  pageSize: 10
+
+# ── Pagination ────────────────────────────────────────────────────────────────
+pagination:
+  maxSize: 10
+  pageSize: 10
+
+# ── Languages ─────────────────────────────────────────────────────────────────
+languages:
+  - code: en
+    label: English
+    active: true
+
+# ── Forms ─────────────────────────────────────────────────────────────────────
+forms:
+  validatorFactory: DSpaceFormValidatorFactory
+
+# ── Submit ────────────────────────────────────────────────────────────────────
+submission:
+  autosave:
+    timer: 5
+    metadata: []
+  icons:
+    metadata: []
+
+# ── Metadata ──────────────────────────────────────────────────────────────────
+metadata:
+  tagTypes:
+    - field: dc.description.abstract
+      parser: PLAIN_TEXT
+    - field: dc.description
+      parser: PLAIN_TEXT
+
+# ── Notifications ─────────────────────────────────────────────────────────────
+notifications:
+  rtl: false
+  position:
+    - top
+    - right
+  maxStack: 8
+  timeout: 5000
+  animate: scale
+  closeButton: true
+  icons:
+    success: fas,check-circle
+    info: fas,info-circle
+    warning: fas,exclamation-triangle
+    error: fas,times-circle

@@ -1,0 +1,32 @@
+[Unit]
+Description=DSpace Angular UI — Bulawayo Polytechnic
+Documentation=https://wiki.lyrasis.org/display/DSDOC7x
+After=network.target tomcat9.service solr.service
+Wants=tomcat9.service
+
+[Service]
+Type=simple
+User=dspace
+Group=dspace
+WorkingDirectory=%%ANGULAR_SRC_DIR%%
+Environment=NODE_ENV=production
+Environment=PORT=%%UI_PORT%%
+Environment=NODE_OPTIONS=--max-old-space-size=2048
+
+ExecStart=/usr/bin/yarn start:prod
+ExecStop=/bin/kill -SIGTERM $MAINPID
+
+Restart=on-failure
+RestartSec=15s
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging — view with: journalctl -u dspace-ui -f
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dspace-ui
+
+[Install]
+WantedBy=multi-user.target
