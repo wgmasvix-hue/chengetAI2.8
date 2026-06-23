@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# DSpace installer — never commit live credentials
+dspace-install/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
