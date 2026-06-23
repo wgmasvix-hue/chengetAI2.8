@@ -1,4 +1,13 @@
 
+declare global {
+  interface Window {
+    aistudio?: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
+}
+
 export enum AppView {
   OVERVIEW = 'OVERVIEW',
   TEACHING = 'TEACHING', // Pillar 1
