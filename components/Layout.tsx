@@ -35,34 +35,34 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, onLogout
   }, []);
 
   const staffItems = [
-    { id: AppView.OVERVIEW, label: 'Welcome Page', icon: '🏛️' },
-    { id: AppView.SYSTEMS_ADMIN, label: 'Systems Admin', icon: '⚙️' },
-    { id: AppView.AI_STUDIO, label: 'AI Studio', icon: '🧪' },
-    { id: AppView.DIGITAL_RESOURCES, label: 'Digital Assets', icon: '📀' },
-    { id: AppView.TRENDING, label: 'Trending Books', icon: '📡' },
-    { id: AppView.ASSISTANT, label: 'TAURAI Assistant', icon: '✨' },
-    { id: AppView.KOHA_DASHBOARD, label: 'Library Reports', icon: '📊' },
-    { id: AppView.COLLECTION, label: 'Book Analysis', icon: '📊' },
-    { id: AppView.DISCOURSE, label: 'Community Talk', icon: '🗨️' },
-    { id: AppView.TEACHING, label: 'Helping Teachers', icon: '👨‍🏫' },
+    { id: AppView.OVERVIEW, label: 'IR Home', icon: '🏛️' },
+    { id: AppView.DIGITAL_RESOURCES, label: 'Repository Archive', icon: '🗄️' },
+    { id: AppView.ASSISTANT, label: 'TAURAI AI Librarian', icon: '✨' },
+    { id: AppView.KOHA_DASHBOARD, label: 'Koha Reports', icon: '📊' },
+    { id: AppView.COLLECTION, label: 'Collection Analysis', icon: '📈' },
+    { id: AppView.CATALOGUING, label: 'Cataloguing Tool', icon: '🏷️' },
+    { id: AppView.TRENDING, label: 'Trending Items', icon: '📡' },
     { id: AppView.RESEARCH, label: 'Research Hub', icon: '🌐' },
-    { id: AppView.COMMUNITY, label: 'Community Work', icon: '📣' },
-    { id: AppView.INnovation, label: 'New Ideas', icon: '💡' },
-    { id: AppView.INDUSTRIALIZATION, label: 'Work & Tools', icon: '🏭' },
-    { id: AppView.OPEN_ACCESS, label: 'Free Resources', icon: '🔓' },
-    { id: AppView.CATALOGUING, label: 'Book Info Tool', icon: '🏷️' },
-    { id: AppView.DSPACE_INSTALL, label: 'DSpace Installer', icon: '🗄️' },
+    { id: AppView.TEACHING, label: 'Teaching Support', icon: '👨‍🏫' },
+    { id: AppView.OPEN_ACCESS, label: 'Open Access Portal', icon: '🔓' },
+    { id: AppView.DISCOURSE, label: 'Community Forums', icon: '🗨️' },
+    { id: AppView.COMMUNITY, label: 'Outreach', icon: '📣' },
+    { id: AppView.INnovation, label: 'Heritage Digitization', icon: '💡' },
+    { id: AppView.INDUSTRIALIZATION, label: 'Smart Operations', icon: '🏭' },
+    { id: AppView.AI_STUDIO, label: 'AI Studio', icon: '🧪' },
+    { id: AppView.SYSTEMS_ADMIN, label: 'Systems Admin', icon: '⚙️' },
+    { id: AppView.DSPACE_INSTALL, label: 'DSpace Installer', icon: '🖥️' },
   ];
 
   const studentItems = [
-    { id: AppView.STUDENT_PORTAL, label: 'My Learning Space', icon: '🏠' },
-    { id: AppView.DIGITAL_RESOURCES, label: 'Digital Assets', icon: '📀' },
-    { id: AppView.ASSISTANT, label: 'TAURAI Help', icon: '✨' },
-    { id: AppView.TRENDING, label: 'Popular Books', icon: '📡' },
+    { id: AppView.STUDENT_PORTAL, label: 'My Portal', icon: '🏠' },
+    { id: AppView.DIGITAL_RESOURCES, label: 'BPoly Repository', icon: '🗄️' },
+    { id: AppView.ASSISTANT, label: 'TAURAI AI Help', icon: '✨' },
+    { id: AppView.TRENDING, label: 'Popular Items', icon: '📡' },
     { id: AppView.RESEARCH, label: 'Research Hub', icon: '🌐' },
-    { id: AppView.OPEN_ACCESS, label: 'Free Reading', icon: '🔓' },
-    { id: AppView.DISCOURSE, label: 'Student Talk', icon: '🗨️' },
-    { id: AppView.OVERVIEW, label: 'Welcome Home', icon: '🏛️' },
+    { id: AppView.OPEN_ACCESS, label: 'Open Access', icon: '🔓' },
+    { id: AppView.DISCOURSE, label: 'Student Forums', icon: '🗨️' },
+    { id: AppView.OVERVIEW, label: 'IR Home', icon: '🏛️' },
   ];
 
   const navItems = userRole === 'student' ? studentItems : staffItems;
@@ -75,7 +75,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, setView, onLogout
             <div className="w-10 h-10 bg-[#136f6f] rounded-xl flex items-center justify-center text-white shadow-lg shadow-teal-900/20">
               <LogoIcon className="w-7 h-7" />
             </div>
-            <span className="hidden md:block font-bold text-lg tracking-tight google-sans text-[#136f6f]">LibraryStudio 5.0</span>
+            <div className="hidden md:block">
+              <span className="font-black text-sm tracking-tight google-sans text-[#136f6f] uppercase block">BPoly Library</span>
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Bulawayo Polytechnic IR</span>
+            </div>
           </div>
         </div>
         

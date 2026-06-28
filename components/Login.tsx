@@ -109,8 +109,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <LogoIcon className="w-10 h-10" />
           </div>
           
-          <h1 className="text-2xl font-black google-sans text-[#136f6f] mb-2 tracking-tighter uppercase">LibraryStudio 5.0</h1>
-          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-10 opacity-60">Knowledge Access Gateway</p>
+          <h1 className="text-xl font-black google-sans text-[#136f6f] mb-1 tracking-tighter uppercase">Bulawayo Polytechnic</h1>
+          <p className="text-zinc-700 text-sm font-bold mb-1">Institutional Repository</p>
+          <p className="text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-10 opacity-70">ir.bpoly.ac.zw · Open Access</p>
 
           <div className="flex bg-zinc-100 p-1 rounded-2xl mb-8">
             <button 
@@ -189,7 +190,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           )}
 
-          <p className="mt-10 text-[9px] font-black text-zinc-300 uppercase tracking-[0.3em]">Built for Education 5.0</p>
+          <p className="mt-10 text-[9px] font-black text-zinc-300 uppercase tracking-[0.3em]">Bulawayo Polytechnic · bpoly.ac.zw</p>
         </div>
         
         {!isRegistering && (
